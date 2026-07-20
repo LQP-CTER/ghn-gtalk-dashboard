@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from "react";
+﻿import React, { useMemo, useState, useEffect } from "react";
 import { Employee } from "@/types";
 import { fmtNumber } from "@/lib/dauDataUtils";
 
@@ -59,7 +59,7 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", `DanhSachUser_${date.replace(/\//g, '-')}.csv`);
+    link.setAttribute("download", `DAU_ListUser_${date.replace(/\//g, '-')}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -118,7 +118,7 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
               whiteSpace: "nowrap"
             }}
           >
-            Xuất Excel
+            Tải file CSV
           </button>
         </div>
       </div>
@@ -223,3 +223,4 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
     </div>
   );
 }
+

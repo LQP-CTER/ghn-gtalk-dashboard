@@ -922,3 +922,29 @@ html, body {
   opacity: .82;
   cursor: wait;
 }
+
+/* ─── Download file button ─────────────────────────────────────────────────── */
+.download-file-btn {
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: .84rem;
+  font-weight: 750;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity .15s ease, transform .15s ease, background .15s ease;
+}
+.download-file-btn:hover:not(:disabled) {
+  background: var(--accent-2);
+  transform: translateY(-1px);
+}
+.download-file-btn:disabled {
+  background: #cbd5e1;
+  color: #f8fafc;
+  cursor: not-allowed;
+  transform: none;
+}

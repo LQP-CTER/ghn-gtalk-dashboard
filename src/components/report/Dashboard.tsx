@@ -417,6 +417,49 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
       .sort((a, b) => (a.isActive === b.isActive ? 0 : a.isActive ? -1 : 1));
   }, [sidebarStaff, currDownloadSet, detailSearch, detailStatusFilter]);
 
+  const handleDownloadDetailRows = useCallback(() => {
+    if (detailRows.length === 0) return;
+
+    const csvEscape = (value: string | number | null | undefined) => {
+      const text = String(value ?? '');
+      return `"${text.replace(/"/g, '""')}"`;
+    };
+
+    const header = [
+      'Employee ID',
+      'Division',
+      'Department',
+      'Section',
+      'Team',
+      'Download/Login Status',
+      'Report Date',
+    ];
+
+    const rows = detailRows.map(s => [
+      s.employee_id,
+      s.division_name_vn,
+      s.department_name_vn,
+      s.section_name_vn,
+      s.team_name_vn,
+      s.isActive ? 'Da tai/login' : 'Chua tai/login',
+      selectedDate,
+    ]);
+
+    const csv = [header, ...rows]
+      .map(row => row.map(csvEscape).join(','))
+      .join('\n');
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `GtalkDownload_ListUser_${selectedDate.replace(/\//g, '-')}.csv`;
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, [detailRows, selectedDate]);
   const resetFilters = useCallback(() => {
     setSelDiv([]); setSelDept([]); setSelSec([]); setSelTeam([]);
   }, []);
@@ -632,6 +675,14 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
                     onChange={e => setDetailSearch(e.target.value)}
                     className="modern-search-input"
                   />
+                  <button
+                    type="button"
+                    onClick={handleDownloadDetailRows}
+                    disabled={detailRows.length === 0}
+                    className="download-file-btn"
+                  >
+                    Tải file CSV
+                  </button>
                 </div>
               </div>
 
@@ -682,7 +733,7 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
                 </table>
                 {detailRows.length > 500 && (
                   <div className="text-center py-4 text-xs font-medium text-slate-400 border-t border-slate-100 bg-slate-50/50">
-                    Hiển thị 500/{detailRows.length.toLocaleString()} kết quả — Dùng bộ lọc phía trên để thu hẹp danh sách
+                    Hiển thị 500/{detailRows.length.toLocaleString()} kết quả — File tải về vẫn bao gồm toàn bộ kết quả sau lọc
                   </div>
                 )}
               </div>
@@ -693,6 +744,7 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
     </div>
   );
 }
+
 
 
 
