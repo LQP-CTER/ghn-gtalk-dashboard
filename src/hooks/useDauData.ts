@@ -117,7 +117,7 @@ function parseUserActive(rows: string[][]): ActiveByDate {
   return activeByDate;
 }
 
-export function useDauData(): DauData & { reload: (force?: boolean) => void } {
+export function useDauData(): DauData & { reload: (force?: boolean) => void; refreshing: boolean } {
   const [data, setData] = useState<DauData>({
     employees: [],
     activeByDate: {},
@@ -126,8 +126,15 @@ export function useDauData(): DauData & { reload: (force?: boolean) => void } {
     error: null,
   });
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const load = useCallback(async (force = false) => {
-    setData((prev) => ({ ...prev, loading: true, error: null }));
+    setRefreshing(true);
+    setData((prev) => ({
+      ...prev,
+      loading: prev.employees.length === 0 && Object.keys(prev.activeByDate).length === 0,
+      error: null,
+    }));
     try {
       const minDelay = force ? new Promise(r => setTimeout(r, 4500)) : Promise.resolve();
       
@@ -153,9 +160,11 @@ export function useDauData(): DauData & { reload: (force?: boolean) => void } {
       });
 
       setData({ employees, activeByDate, allDates, loading: false, error: null });
+      setRefreshing(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setData((prev) => ({ ...prev, loading: false, error: msg }));
+      setRefreshing(false);
     }
   }, []);
 
@@ -163,6 +172,9 @@ export function useDauData(): DauData & { reload: (force?: boolean) => void } {
     load();
   }, [load]);
 
-  return { ...data, reload: load };
+  return { ...data, refreshing, reload: load };
 }
+
+
+
 

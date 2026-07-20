@@ -896,3 +896,29 @@ html, body {
     display: block;
   }
 }
+
+/* ─── Reload feedback ──────────────────────────────────────────────────────── */
+.reload-status {
+  min-height: 22px;
+  margin: -10px 0 14px;
+  padding: 6px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+  font-size: .72rem;
+  line-height: 1.35;
+}
+.reload-status.is-loading {
+  border-color: rgba(99,102,241,.24);
+  background: rgba(99,102,241,.07);
+  color: #4338ca;
+  font-weight: 700;
+}
+.reload-status.is-ready {
+  color: var(--text-subtle);
+}
+.sidebar-reload-btn[aria-busy="true"] {
+  opacity: .82;
+  cursor: wait;
+}

@@ -1,5 +1,5 @@
 ﻿"use client";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Employee } from "@/types";
 import { getUniqueValues } from "@/lib/dauDataUtils";
 
@@ -18,6 +18,7 @@ interface SidebarProps {
   onTeamsChange: (v: string[]) => void;
   onReload: () => void;
   loading: boolean;
+  refreshing: boolean;
 }
 
 function MultiSelect({
@@ -98,7 +99,8 @@ function DateSelect({
   const [search, setSearch] = useState('');
   const [isOpen, setIsOpen] = useState(false);
 
-  const filteredOptions = options.filter(opt => opt.toLowerCase().includes(search.toLowerCase()));
+  const visibleOptions = useMemo(() => [...options].reverse(), [options]);
+  const filteredOptions = visibleOptions.filter(opt => opt.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="filter-group mb-4">
@@ -147,7 +149,7 @@ export default function Sidebar({
   allDates, employees,
   selectedDate, selectedDivisions, selectedDepartments, selectedSections, selectedTeams,
   onDateChange, onDivisionsChange, onDepartmentsChange, onSectionsChange, onTeamsChange,
-  onReload, loading,
+  onReload, loading, refreshing,
 }: SidebarProps) {
 
   const filteredByDiv = selectedDivisions.length
@@ -177,9 +179,12 @@ export default function Sidebar({
 
       <div className="sidebar-body">
         {/* Reload */}
-        <button className="sidebar-reload-btn" onClick={onReload} disabled={loading}>
-          {loading ? "Đang tải..." : "Tải lại dữ liệu"}
+        <button className="sidebar-reload-btn" onClick={onReload} disabled={refreshing} aria-busy={refreshing}>
+          {refreshing ? "Đang tải dữ liệu..." : "Tải lại dữ liệu"}
         </button>
+        <div className={`reload-status ${refreshing ? 'is-loading' : 'is-ready'}`} role="status" aria-live="polite">
+          {refreshing ? "Đang lấy dữ liệu mới từ DAU User Tracking Sheet" : "Sẵn sàng · Dữ liệu DAU đã sẵn sàng"}
+        </div>
 
         {/* Date */}
         <DateSelect
@@ -212,5 +217,8 @@ export default function Sidebar({
     </aside>
   );
 }
+
+
+
 
 

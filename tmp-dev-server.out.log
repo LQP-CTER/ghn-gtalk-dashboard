@@ -1,0 +1,10 @@
+
+> ghn-gtalk-dashboard@0.1.0 dev
+> next dev
+
+▲ Next.js 16.2.10 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://172.17.119.88:3000
+✓ Ready in 1426ms
+
+ GET / 200 in 1339ms (next.js: 476ms, application-code: 863ms)

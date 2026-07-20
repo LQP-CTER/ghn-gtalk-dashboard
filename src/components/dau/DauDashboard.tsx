@@ -19,7 +19,7 @@ import Loading from "@/app/loading";
 type Tab = "dashboard" | "detail";
 
 export default function DauDashboard({ externalTab = "dashboard" }: { externalTab?: "dashboard" | "detail" }) {
-  const { employees, activeByDate, allDates, loading, error, reload } = useDauData();
+  const { employees, activeByDate, allDates, loading, refreshing, error, reload } = useDauData();
 
   // ─── Filter state ─────────────────────────────────────────────────────────
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -106,6 +106,7 @@ export default function DauDashboard({ externalTab = "dashboard" }: { externalTa
         onTeamsChange={setSelectedTeams}
         onReload={() => reload(true)}
         loading={loading}
+        refreshing={refreshing}
       />
 
       <div className="main">
@@ -166,6 +167,8 @@ export default function DauDashboard({ externalTab = "dashboard" }: { externalTa
     </div>
   );
 }
+
+
 
 
 

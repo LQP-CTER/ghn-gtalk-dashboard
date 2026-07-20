@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback, useEffect, useTransition } from 'react';
 import { ReportData, StaffData } from '@/lib/gtalkDataUtils';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -110,7 +110,8 @@ function DateSelect({
   const [search, setSearch] = useState('');
   const [isOpen, setIsOpen] = useState(false);
 
-  const filteredOptions = options.filter(opt => opt.toLowerCase().includes(search.toLowerCase()));
+  const visibleOptions = useMemo(() => [...options].reverse(), [options]);
+  const filteredOptions = visibleOptions.filter(opt => opt.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <div className="filter-group mb-6">
@@ -257,6 +258,7 @@ function BreakdownTable({ rows, colLabel }: { rows: BreakdownRow[]; colLabel: st
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function Dashboard({ data, externalTab = 'dashboard' }: DashboardProps) {
   const router = useRouter();
+  const [isRefreshing, startRefreshTransition] = useTransition();
   const { staffList, activeByDate, allDates } = data;
 
   const [selectedDate, setSelectedDate] = useState(allDates[allDates.length - 1] || '');
@@ -435,11 +437,16 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
         <div className="sidebar-body">
           {/* Reload */}
           <button
-            onClick={() => router.push('/?refresh=true&t=' + Date.now())}
+            onClick={() => startRefreshTransition(() => router.push('/?refresh=true&t=' + Date.now()))}
             className="sidebar-reload-btn"
+            disabled={isRefreshing}
+            aria-busy={isRefreshing}
           >
-            Tải lại dữ liệu
+            {isRefreshing ? "Đang tải dữ liệu..." : "Tải lại dữ liệu"}
           </button>
+          <div className={`reload-status ${isRefreshing ? 'is-loading' : 'is-ready'}`} role="status" aria-live="polite">
+            {isRefreshing ? "Đang lấy dữ liệu mới từ Gtalk Download Sheet" : `Sẵn sàng · Cập nhật gần nhất ${now || 'vừa xong'}`}
+          </div>
 
           <DateSelect 
             label="Ngày báo cáo" 
@@ -686,6 +693,9 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
     </div>
   );
 }
+
+
+
 
 
 
