@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import React, { useState, useMemo, useCallback, useEffect, useTransition } from 'react';
 import { ReportData, StaffData } from '@/lib/gtalkDataUtils';
@@ -31,11 +31,9 @@ function buildDownloadLoginSet(
 
 function computeMetricsFromSet(staff: StaffData[], downloadLoginSet: Set<number>) {
   if (staff.length === 0) return { totalHc: 0, gtalkAll: 0, mappedActive: 0, pctMapped: 0 };
-  const ids = new Set(staff.map(s => Number(s.employee_id)));
-  const totalHc = ids.size;
+  const totalHc = staff.length;
   const gtalkAll = downloadLoginSet.size;
-  let mappedActive = 0;
-  ids.forEach(id => { if (downloadLoginSet.has(id)) mappedActive++; });
+  const mappedActive = staff.filter(s => downloadLoginSet.has(Number(s.employee_id))).length;
   const pctMapped = totalHc > 0 ? (mappedActive / totalHc) * 100 : 0;
   return { totalHc, gtalkAll, mappedActive, pctMapped };
 }
@@ -348,7 +346,7 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
     const activeSetPrev = prevDownloadSet;
     return safeUnique(sidebarStaff.map(s => s.division_name_vn)).map(div => {
       const staff = sidebarStaff.filter(s => s.division_name_vn === div);
-      const total = new Set(staff.map(s => Number(s.employee_id))).size;
+      const total = staff.length;
       const active = staff.filter(s => activeSet.has(Number(s.employee_id))).length;
       const activePrev = staff.filter(s => activeSetPrev.has(Number(s.employee_id))).length;
       const pctCurr = total > 0 ? active / total * 100 : 0;
@@ -744,14 +742,3 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
     </div>
   );
 }
-
-
-
-
-
-
-
-
-
-
-

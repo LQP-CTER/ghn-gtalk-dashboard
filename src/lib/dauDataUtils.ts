@@ -10,7 +10,7 @@ export function computeMetrics(
     return { totalHc: 0, activeCount: 0, inactiveCount: 0, pct: 0 };
   }
   const activeSet = activeByDate[targetDate] ?? new Set<number>();
-  const totalHc = new Set(employees.map((e) => e.employee_id)).size;
+  const totalHc = employees.length;
   const activeCount = employees.filter((e) => activeSet.has(e.employee_id)).length;
   const inactiveCount = totalHc - activeCount;
   const pct = totalHc > 0 ? (activeCount / totalHc) * 100 : 0;
