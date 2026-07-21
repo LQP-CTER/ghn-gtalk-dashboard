@@ -22,13 +22,10 @@ const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
 export async function fetchAndProcessData(forceRefresh = false): Promise<ReportData> {
   if (!forceRefresh && _cache && Date.now() - _cache.ts < CACHE_TTL) return _cache.data;
 
-  // Add artificial delay on hard refresh to allow the UI loading sequence to play out
-  const minDelay = forceRefresh ? new Promise(r => setTimeout(r, 4500)) : Promise.resolve();
 
   const res = await fetch(APPS_SCRIPT_URL, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Apps Script fetch failed: ${res.status}`);
   
-  await minDelay;
 
   const data = await res.json() as ReportData;
 
