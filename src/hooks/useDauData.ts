@@ -8,8 +8,18 @@ const SHEET_ID = "1p6cj7feop34eqLNAWNKC1ew8bTA1vl8UUS8e6SISjiY";
 // DAU Google Sheets CSV export (requires sheet to be publicly shared)
 const WORKFORCE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 const USER_ACTIVE_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=1300871074`;
-const CACHE_KEY = "gtalk-dashboard:dau-data:v3";
+const CACHE_KEY = "gtalk-dashboard:dau-data:v4";
 const CACHE_TTL = 20 * 60 * 1000;
+
+type CachedDauData = {
+  ts: number;
+  employees: Employee[];
+  activeByDate: Record<string, number[]>;
+  allDates: string[];
+};
+
+let memoryCache: { ts: number; data: DauData } | null = null;
+let inFlightLoad: Promise<DauData> | null = null;
 
 async function fetchCsv(url: string): Promise<string[][]> {
   const res = await fetch(url);
@@ -19,55 +29,77 @@ async function fetchCsv(url: string): Promise<string[][]> {
   return result.data;
 }
 
-type CachedDauData = {
-  ts: number;
-  employees: Employee[];
-  activeByDate: Record<string, number[]>;
-  allDates: string[];
-};
-
 function hasUsableWorkforce(employees?: Employee[]): employees is Employee[] {
   if (!employees || employees.length === 0) return false;
   const first = employees[0];
   return Number.isFinite(Number(first.employee_id)) && Boolean(first.division_name || first.department_name || first.team_name);
 }
 
+function withSharedWorkforce(data: DauData, sharedEmployees?: Employee[]): DauData {
+  return {
+    ...data,
+    employees: hasUsableWorkforce(sharedEmployees) ? sharedEmployees : data.employees,
+    loading: false,
+  };
+}
+
+function serializeActiveByDate(activeByDate: ActiveByDate): Record<string, number[]> {
+  const serialized: Record<string, number[]> = {};
+  Object.entries(activeByDate).forEach(([date, ids]) => {
+    serialized[date] = Array.from(ids);
+  });
+  return serialized;
+}
+
+function hydrateActiveByDate(activeByDate: Record<string, number[]>): ActiveByDate {
+  const hydrated: ActiveByDate = {};
+  Object.entries(activeByDate || {}).forEach(([date, ids]) => {
+    hydrated[date] = new Set(ids.map(Number));
+  });
+  return hydrated;
+}
+
 function readCachedDauData(sharedEmployees?: Employee[]): DauData | null {
+  const now = Date.now();
+
+  if (memoryCache && now - memoryCache.ts <= CACHE_TTL) {
+    return withSharedWorkforce(memoryCache.data, sharedEmployees);
+  }
+
+  if (typeof window === "undefined") return null;
+
   try {
     const raw = sessionStorage.getItem(CACHE_KEY);
     if (!raw) return null;
     const cached = JSON.parse(raw) as CachedDauData;
-    if (!cached.ts || Date.now() - cached.ts > CACHE_TTL) return null;
+    if (!cached.ts || now - cached.ts > CACHE_TTL) return null;
 
-    const activeByDate: ActiveByDate = {};
-    Object.entries(cached.activeByDate || {}).forEach(([date, ids]) => {
-      activeByDate[date] = new Set(ids.map(Number));
-    });
-
-    return {
-      employees: hasUsableWorkforce(sharedEmployees) ? sharedEmployees : cached.employees || [],
-      activeByDate,
+    const data: DauData = {
+      employees: cached.employees || [],
+      activeByDate: hydrateActiveByDate(cached.activeByDate),
       allDates: cached.allDates || [],
       loading: false,
       error: null,
     };
+
+    memoryCache = { ts: cached.ts, data };
+    return withSharedWorkforce(data, sharedEmployees);
   } catch {
     return null;
   }
 }
 
 function writeCachedDauData(data: DauData) {
+  const cleanData = { ...data, loading: false, error: null };
+  memoryCache = { ts: Date.now(), data: cleanData };
+
   if (typeof window === "undefined") return;
   try {
-    const activeByDate: Record<string, number[]> = {};
-    Object.entries(data.activeByDate).forEach(([date, ids]) => {
-      activeByDate[date] = Array.from(ids);
-    });
     sessionStorage.setItem(CACHE_KEY, JSON.stringify({
-      ts: Date.now(),
-      employees: data.employees,
-      activeByDate,
-      allDates: data.allDates,
+      ts: memoryCache.ts,
+      employees: cleanData.employees,
+      activeByDate: serializeActiveByDate(cleanData.activeByDate),
+      allDates: cleanData.allDates,
     }));
   } catch {
     // Cache is only a speed-up; data rendering should not depend on it.
@@ -165,21 +197,52 @@ function parseUserActive(rows: string[][]): ActiveByDate {
   return activeByDate;
 }
 
-export function useDauData(sharedEmployees?: Employee[]): DauData & { reload: (force?: boolean) => void; refreshing: boolean } {
-  const [data, setData] = useState<DauData>({
+async function fetchDauData(force: boolean, sharedEmployees?: Employee[]): Promise<DauData> {
+  const canReuseWorkforce = !force && hasUsableWorkforce(sharedEmployees);
+  const userActiveUrl = force ? `${USER_ACTIVE_URL}&t=${Date.now()}` : USER_ACTIVE_URL;
+  const workforcePromise = canReuseWorkforce
+    ? Promise.resolve<string[][] | null>(null)
+    : fetchCsv(force ? `${WORKFORCE_URL}&t=${Date.now()}` : WORKFORCE_URL);
+
+  const [workforceRows, userActiveRows] = await Promise.all([
+    workforcePromise,
+    fetchCsv(userActiveUrl),
+  ]);
+
+  const employees = canReuseWorkforce ? sharedEmployees : parseWorkforce(workforceRows || []);
+  const activeByDate = parseUserActive(userActiveRows);
+  const allDates = Object.keys(activeByDate).sort((a, b) => {
+    const toMs = (d: string) => {
+      const [day, month] = d.split("/").map(Number);
+      return new Date(2026, month - 1, day).getTime();
+    };
+    return toMs(a) - toMs(b);
+  });
+
+  return { employees, activeByDate, allDates, loading: false, error: null };
+}
+
+function getInitialData(sharedEmployees?: Employee[]): DauData {
+  if (typeof window !== "undefined") {
+    const cached = readCachedDauData(sharedEmployees);
+    if (cached) return cached;
+  }
+
+  return {
     employees: hasUsableWorkforce(sharedEmployees) ? sharedEmployees : [],
     activeByDate: {},
     allDates: [],
     loading: true,
     error: null,
-  });
+  };
+}
 
+export function useDauData(sharedEmployees?: Employee[]): DauData & { reload: (force?: boolean) => void; refreshing: boolean } {
+  const [data, setData] = useState<DauData>(() => getInitialData(sharedEmployees));
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async (force = false) => {
-    const canReuseWorkforce = !force && hasUsableWorkforce(sharedEmployees);
-
-    if (!force && typeof window !== "undefined") {
+    if (!force) {
       const cached = readCachedDauData(sharedEmployees);
       if (cached) {
         setData(cached);
@@ -191,46 +254,39 @@ export function useDauData(sharedEmployees?: Employee[]): DauData & { reload: (f
     setRefreshing(true);
     setData((prev) => ({
       ...prev,
-      employees: canReuseWorkforce ? sharedEmployees : prev.employees,
-      loading: prev.employees.length === 0 && Object.keys(prev.activeByDate).length === 0,
+      employees: hasUsableWorkforce(sharedEmployees) ? sharedEmployees : prev.employees,
+      loading: prev.allDates.length === 0 && Object.keys(prev.activeByDate).length === 0,
       error: null,
     }));
 
     try {
-      const userActiveUrl = force ? `${USER_ACTIVE_URL}&t=${Date.now()}` : USER_ACTIVE_URL;
-      const workforcePromise = canReuseWorkforce
-        ? Promise.resolve<string[][] | null>(null)
-        : fetchCsv(force ? `${WORKFORCE_URL}&t=${Date.now()}` : WORKFORCE_URL);
+      if (!force && inFlightLoad) {
+        const dataFromInFlight = await inFlightLoad;
+        setData(withSharedWorkforce(dataFromInFlight, sharedEmployees));
+        return;
+      }
 
-      const [workforceRows, userActiveRows] = await Promise.all([
-        workforcePromise,
-        fetchCsv(userActiveUrl),
-      ]);
-
-      const employees = canReuseWorkforce ? sharedEmployees : parseWorkforce(workforceRows || []);
-      const activeByDate = parseUserActive(userActiveRows);
-      const allDates = Object.keys(activeByDate).sort((a, b) => {
-        const toMs = (d: string) => {
-          const [day, month] = d.split("/").map(Number);
-          return new Date(2026, month - 1, day).getTime();
-        };
-        return toMs(a) - toMs(b);
-      });
-
-      const nextData = { employees, activeByDate, allDates, loading: false, error: null };
-      setData(nextData);
+      const request = fetchDauData(force, sharedEmployees);
+      if (!force) inFlightLoad = request;
+      const nextData = await request;
       writeCachedDauData(nextData);
+      setData(withSharedWorkforce(nextData, sharedEmployees));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       setData((prev) => ({ ...prev, loading: false, error: msg }));
     } finally {
+      if (!force) inFlightLoad = null;
       setRefreshing(false);
     }
   }, [sharedEmployees]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (data.allDates.length > 0) return;
+    const timer = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [data.allDates.length, load]);
 
   return { ...data, refreshing, reload: load };
 }

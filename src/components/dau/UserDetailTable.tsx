@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState, useEffect } from "react";
+import React, { useMemo, useState } from "react";
 import { Employee } from "@/types";
 import { fmtNumber } from "@/lib/dauDataUtils";
 
@@ -35,10 +35,10 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
     );
   }, [employees, activeSet, searchTerm, statusFilter]);
 
-  // Reset page when filters change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, statusFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / itemsPerPage));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageUsers = filteredUsers.slice((safeCurrentPage - 1) * itemsPerPage, safeCurrentPage * itemsPerPage);
 
   const handleExport = () => {
     if (filteredUsers.length === 0) return;
@@ -64,6 +64,7 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -76,7 +77,10 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
           <select
             className="modern-select"
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")}
+            onChange={(e) => {
+              setStatusFilter(e.target.value as "all" | "active" | "inactive");
+              setCurrentPage(1);
+            }}
             style={{
               padding: "10px 14px",
               borderRadius: "12px",
@@ -98,7 +102,10 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
             className="modern-search-input"
             placeholder="Tìm theo ID, Tên, Phòng ban..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
           />
           <button
             onClick={handleExport}
@@ -113,7 +120,7 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
               fontSize: "0.85rem",
               fontWeight: 600,
               cursor: filteredUsers.length === 0 ? "not-allowed" : "pointer",
-              boxShadow: filteredUsers.length === 0 ? "none" : "0 4px 12px rgba(99, 102, 241, 0.25)",
+              boxShadow: filteredUsers.length === 0 ? "none" : "0 4px 12px rgba(249, 115, 22, 0.24)",
               transition: "all 0.2s ease",
               whiteSpace: "nowrap"
             }}
@@ -147,7 +154,7 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
                 </td>
               </tr>
             ) : (
-              filteredUsers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((e) => {
+              pageUsers.map((e) => {
                 // Get initials for avatar (e.g. "Nguyen Van A" -> "A")
                 const parts = e.employee_name.trim().split(" ");
                 const initial = parts.length > 0 ? parts[parts.length - 1][0].toUpperCase() : "U";
@@ -188,30 +195,30 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
       {filteredUsers.length > itemsPerPage && (
         <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: 16, gap: 12 }}>
           <span style={{ fontSize: '0.85rem', color: '#64748b' }}>
-            Trang {currentPage} / {Math.ceil(filteredUsers.length / itemsPerPage)}
+            Trang {safeCurrentPage} / {totalPages}
           </span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage === 1}
+              disabled={safeCurrentPage === 1}
               style={{ 
                 padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', 
-                background: currentPage === 1 ? '#f8fafc' : 'white', 
-                color: currentPage === 1 ? '#94a3b8' : '#334155',
-                cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                background: safeCurrentPage === 1 ? '#f8fafc' : 'white', 
+                color: safeCurrentPage === 1 ? '#94a3b8' : '#334155',
+                cursor: safeCurrentPage === 1 ? 'not-allowed' : 'pointer',
                 fontFamily: "'Inter', sans-serif", fontSize: '0.8rem', fontWeight: 500
               }}
             >
               Trước
             </button>
             <button
-              onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredUsers.length / itemsPerPage), p + 1))}
-              disabled={currentPage === Math.ceil(filteredUsers.length / itemsPerPage)}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={safeCurrentPage === totalPages}
               style={{ 
                 padding: '6px 12px', borderRadius: '8px', border: '1px solid #cbd5e1', 
-                background: currentPage === Math.ceil(filteredUsers.length / itemsPerPage) ? '#f8fafc' : 'white', 
-                color: currentPage === Math.ceil(filteredUsers.length / itemsPerPage) ? '#94a3b8' : '#334155',
-                cursor: currentPage === Math.ceil(filteredUsers.length / itemsPerPage) ? 'not-allowed' : 'pointer',
+                background: safeCurrentPage === totalPages ? '#f8fafc' : 'white', 
+                color: safeCurrentPage === totalPages ? '#94a3b8' : '#334155',
+                cursor: safeCurrentPage === totalPages ? 'not-allowed' : 'pointer',
                 fontFamily: "'Inter', sans-serif", fontSize: '0.8rem', fontWeight: 500
               }}
             >
@@ -223,4 +230,3 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
     </div>
   );
 }
-

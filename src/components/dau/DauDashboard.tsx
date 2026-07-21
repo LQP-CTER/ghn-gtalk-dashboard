@@ -17,8 +17,6 @@ import DrillDownTable from "@/components/dau/DrillDownTable";
 import UserDetailTable from "@/components/dau/UserDetailTable";
 import Loading from "@/app/loading";
 
-type Tab = "dashboard" | "detail";
-
 export default function DauDashboard({ externalTab = "dashboard", sharedEmployees }: { externalTab?: "dashboard" | "detail"; sharedEmployees?: Employee[] }) {
   const { employees, activeByDate, allDates, loading, refreshing, error, reload } = useDauData(sharedEmployees);
 
@@ -62,6 +60,11 @@ export default function DauDashboard({ externalTab = "dashboard", sharedEmployee
     [filteredEmployees, effectiveDate, prevDate, activeByDate, drillLevel]
   );
 
+  const detailActiveSet = useMemo(
+    () => activeByDate[effectiveDate] || new Set<number>(),
+    [activeByDate, effectiveDate]
+  );
+
 
 
   // ─── Loading ──────────────────────────────────────────────────────────────
@@ -77,7 +80,7 @@ export default function DauDashboard({ externalTab = "dashboard", sharedEmployee
             <p>{error}</p>
             <p style={{ marginTop: 10 }}>
               Hướng dẫn: Mở Google Sheet → <strong>Chia sẻ</strong> → Chọn{" "}
-              <strong>"Bất kỳ ai có đường liên kết"</strong> → <strong>Người xem</strong>
+              <strong>Bất kỳ ai có đường liên kết</strong> → <strong>Người xem</strong>
             </p>
             <button className="sidebar-reload-btn" style={{ marginTop: 14, maxWidth: 200 }} onClick={() => reload()}>
               Thử lại
@@ -154,7 +157,8 @@ export default function DauDashboard({ externalTab = "dashboard", sharedEmployee
           ) : (
             <UserDetailTable 
               employees={filteredEmployees}
-              activeSet={activeByDate[effectiveDate] || new Set()}
+              activeSet={detailActiveSet}
+              key={effectiveDate}
               date={effectiveDate}
             />
           )}
