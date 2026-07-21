@@ -62,9 +62,9 @@ function FilterSelect({
       <button
         className="filter-toggle"
         onClick={() => setIsOpen(!isOpen)}
-        style={count > 0 ? { color: "#6366f1", borderColor: "rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.04)" } : {}}
+        style={count > 0 ? { color: "#f97316", borderColor: "rgba(249,115,22,0.3)", background: "rgba(249,115,22,0.04)" } : {}}
       >
-        <span>{label}{count > 0 && <span style={{ marginLeft: 6, background: "#6366f1", color: "white", borderRadius: 20, padding: "1px 7px", fontSize: "0.7rem", fontWeight: 700 }}>{count}</span>}</span>
+        <span>{label}{count > 0 && <span style={{ marginLeft: 6, background: "#f97316", color: "white", borderRadius: 20, padding: "1px 7px", fontSize: "0.7rem", fontWeight: 700 }}>{count}</span>}</span>
         <span style={{ fontSize: "0.65rem", color: "#94a3b8", transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
       </button>
 
@@ -95,7 +95,7 @@ function FilterSelect({
         </div>
       )}
       {values.length > 0 && (
-        <div className="text-[0.65rem] text-blue-600 mt-1 ml-1 font-medium">{values.length} mục đã chọn</div>
+        <div className="text-[0.65rem] text-orange-600 mt-1 ml-1 font-medium">{values.length} mục đã chọn</div>
       )}
     </div>
   );
@@ -117,7 +117,7 @@ function DateSelect({
       <button
         className="filter-toggle"
         onClick={() => setIsOpen(!isOpen)}
-        style={{ color: "#6366f1", borderColor: "rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.04)" }}
+        style={{ color: "#f97316", borderColor: "rgba(249,115,22,0.3)", background: "rgba(249,115,22,0.04)" }}
       >
         <span className="font-bold">{value}</span>
         <span style={{ fontSize: "0.65rem", color: "#94a3b8", transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
@@ -177,7 +177,7 @@ function KPICard({ label, value, sub, delta, deltaText, tone }: {
 function MiniBar({ pct }: { pct: number }) {
   return (
     <div className="bg-slate-100 h-2 rounded-full w-24 overflow-hidden shadow-inner">
-      <div className="h-full rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 transition-all duration-500" style={{ width: `${Math.min(pct, 100)}%` }} />
+      <div className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-500" style={{ width: `${Math.min(pct, 100)}%` }} />
     </div>
   );
 }
@@ -537,8 +537,8 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
               {/* Trend */}
               <div className="section">
                 <h3 className="section-title">Xu hướng tải/login Gtalk theo thời gian</h3>
-                <div className="text-[0.75rem] text-blue-700/80 bg-blue-50/50 border border-blue-100 px-4 py-2.5 rounded-lg mb-6 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
+                <div className="text-[0.75rem] text-orange-700/80 bg-orange-50/50 border border-orange-100 px-4 py-2.5 rounded-lg mb-6 flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></div>
                   {trendData.length >= 2
                     ? <span>Tỷ lệ tải/login lũy kế tăng từ <strong>{trendData[0].pct}%</strong> lên <strong>{trendData[trendData.length - 1].pct}%</strong> (+{(trendData[trendData.length - 1].pct - trendData[0].pct).toFixed(1)}pp) qua {allDates.length} kỳ báo cáo.</span>
                     : 'Chưa đủ dữ liệu để vẽ xu hướng'}
@@ -548,8 +548,8 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
                     <ComposedChart data={trendData} margin={{ top: 10, right: 50, left: 0, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorPct" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#fb923c" stopOpacity={0.2}/>
+                          <stop offset="95%" stopColor="#fb923c" stopOpacity={0}/>
                         </linearGradient>
                         <linearGradient id="barColor" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="#94a3b8" />
@@ -559,11 +559,11 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
                       <CartesianGrid vertical={false} stroke="#f1f5f9" strokeDasharray="4 4" />
                       <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b', fontWeight: 500 }} axisLine={false} tickLine={false} dy={10} />
                       <YAxis yAxisId="left" tick={{ fontSize: 11, fill: '#64748b' }} axisLine={false} tickLine={false} dx={-10} />
-                      <YAxis yAxisId="right" orientation="right" tickFormatter={v => `${v}%`} domain={[0, 105]} tick={{ fontSize: 11, fill: '#3b82f6', fontWeight: 600 }} axisLine={false} tickLine={false} dx={10} />
+                      <YAxis yAxisId="right" orientation="right" tickFormatter={v => `${v}%`} domain={[0, 105]} tick={{ fontSize: 11, fill: '#fb923c', fontWeight: 600 }} axisLine={false} tickLine={false} dx={10} />
                       <Tooltip contentStyle={{ borderRadius: '12px', fontSize: '13px', border: '1px solid #e2e8f0', boxShadow: '0 10px 25px -5px rgba(0,0,0,0.1)', padding: '12px' }} />
                       <Bar yAxisId="left" dataKey="newUsers" name="ID tải/login mới" fill="url(#barColor)" radius={[4, 4, 0, 0]} maxBarSize={32} />
                       <Area yAxisId="right" type="monotone" dataKey="pct" stroke="none" fill="url(#colorPct)" />
-                      <Line yAxisId="right" type="monotone" dataKey="pct" name="% Download/Login" stroke="#3b82f6" strokeWidth={3} dot={{ r: 4, fill: '#fff', stroke: '#3b82f6', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#3b82f6', stroke: '#fff', strokeWidth: 2 }} />
+                      <Line yAxisId="right" type="monotone" dataKey="pct" name="% Download/Login" stroke="#fb923c" strokeWidth={3} dot={{ r: 4, fill: '#fff', stroke: '#fb923c', strokeWidth: 2 }} activeDot={{ r: 6, fill: '#fb923c', stroke: '#fff', strokeWidth: 2 }} />
                     </ComposedChart>
                   </ResponsiveContainer>
                 </div>
@@ -581,7 +581,7 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
                         <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: '#334155', fontWeight: 500 }} width={90} tickFormatter={(v) => v.length > 14 ? v.substring(0, 12) + '…' : v} axisLine={false} tickLine={false} />
                         <Tooltip formatter={(v: any) => `${Number(v).toFixed(1)}%`} contentStyle={{ borderRadius: '12px', fontSize: '12px', border: 'none', boxShadow: '0 4px 20px rgba(0,0,0,0.08)' }} cursor={{ fill: '#f8fafc' }} />
                         <Bar dataKey="pctPrev" name={`Kỳ trước (${prevDate || '—'})`} fill="#cbd5e1" radius={[0, 3, 3, 0]} />
-                        <Bar dataKey="pctCurr" name={`Hiện tại (${selectedDate})`} fill="#3b82f6" radius={[0, 3, 3, 0]} />
+                        <Bar dataKey="pctCurr" name={`Hiện tại (${selectedDate})`} fill="#fb923c" radius={[0, 3, 3, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -593,7 +593,7 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
                             <th>Khối</th>
                             <th className="text-right">HC</th>
                             <th className="text-right text-emerald-600">Active</th>
-                            <th className="text-right text-blue-600">%</th>
+                            <th className="text-right text-orange-600">%</th>
                             <th className="text-right">Δ%</th>
                           </tr>
                         </thead>
@@ -627,7 +627,7 @@ export default function Dashboard({ data, externalTab = 'dashboard' }: Dashboard
                         key={lv}
                         onClick={() => setBreakdownLevel(lv)}
                         className={`px-4 py-1.5 rounded-md text-xs font-bold transition-all ${
-                          breakdownLevel === lv ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
+                          breakdownLevel === lv ? 'bg-white text-orange-600 shadow-sm' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-200/50'
                         }`}
                       >
                         {levelLabels[lv]}

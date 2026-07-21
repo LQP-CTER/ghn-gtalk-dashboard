@@ -48,12 +48,12 @@ export default function TrendChart({ data }: TrendChartProps) {
         <ComposedChart data={data} margin={{ top: 16, right: 56, bottom: 32, left: 8 }}>
           <defs>
             <linearGradient id="gradPct" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.18} />
-              <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+              <stop offset="5%" stopColor="#f97316" stopOpacity={0.18} />
+              <stop offset="95%" stopColor="#f97316" stopOpacity={0} />
             </linearGradient>
             <linearGradient id="gradBar" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#06b6d4" stopOpacity={0.55} />
-              <stop offset="100%" stopColor="#3b82f6" stopOpacity={0.25} />
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.55} />
+              <stop offset="100%" stopColor="#fb923c" stopOpacity={0.25} />
             </linearGradient>
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,23,42,0.05)" vertical={false} />
@@ -82,7 +82,7 @@ export default function TrendChart({ data }: TrendChartProps) {
             tickLine={false}
             tickFormatter={(v) => `${v}%`}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.04)" }} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(249,115,22,0.04)" }} />
           <Legend
             wrapperStyle={{ fontSize: "0.82rem", paddingTop: "12px", color: "#64748b" }}
             iconType="circle"
@@ -100,16 +100,16 @@ export default function TrendChart({ data }: TrendChartProps) {
             dataKey="pct"
             name="% Active"
             type="monotone"
-            stroke="#6366f1"
+            stroke="#f97316"
             strokeWidth={2.5}
             fillOpacity={1}
             fill="url(#gradPct)"
-            dot={{ fill: "white", stroke: "#6366f1", strokeWidth: 2, r: 4 }}
-            activeDot={{ r: 6, stroke: "#6366f1", strokeWidth: 2, fill: "white" }}
+            dot={{ fill: "white", stroke: "#f97316", strokeWidth: 2, r: 4 }}
+            activeDot={{ r: 6, stroke: "#f97316", strokeWidth: 2, fill: "white" }}
             label={{
               position: "top",
               formatter: (v: any) => `${v.toFixed(1)}%`,
-              style: { fontSize: 10, fill: "#6366f1", fontWeight: 700, fontFamily: "Inter" },
+              style: { fontSize: 10, fill: "#f97316", fontWeight: 700, fontFamily: "Inter" },
             }}
           />
         </ComposedChart>

@@ -2,163 +2,132 @@
 import React, { useEffect, useState } from "react";
 
 const LOADING_STEPS = [
-  "Kết nối nguồn dữ liệu Gtalk",
-  "Tải dữ liệu nhân sự và hoạt động",
-  "Đồng bộ dữ liệu từ Google Sheets",
-  "Tính toán các chỉ số dashboard",
+  "Kết nối dữ liệu Gtalk",
+  "Tải dữ liệu nhân sự",
+  "Đồng bộ hoạt động người dùng",
+  "Tính toán chỉ số dashboard",
   "Hoàn tất giao diện báo cáo",
 ];
 
-const STEP_PROGRESS = [22, 42, 64, 82, 94];
-const STEP_DELAYS = [220, 760, 1360, 2140, 3000];
-const KPI_SKELETONS = ["Tổng nhân sự", "Đã tải", "Đã đăng nhập"];
-const CHART_BARS = [46, 72, 58, 88, 64, 78, 52, 94];
-const TABLE_ROWS = [0, 1, 2, 3];
+const STEP_PROGRESS = [18, 38, 62, 82, 96];
+const STEP_DELAYS = [180, 720, 1320, 2100, 2920];
+const PREVIEW_BARS = [64, 88, 52, 74, 46];
 
 export default function Loading() {
   const [step, setStep] = useState(0);
-  const [progress, setProgress] = useState(14);
-  const [pulse, setPulse] = useState(0);
+  const [progress, setProgress] = useState(10);
+  const [dotCount, setDotCount] = useState(1);
 
   useEffect(() => {
-    const timeouts = STEP_DELAYS.map((delay, index) => setTimeout(() => {
+    const timers = STEP_DELAYS.map((delay, index) => setTimeout(() => {
       setStep(index);
       setProgress(STEP_PROGRESS[index]);
     }, delay));
 
-    const ticker = setInterval(() => {
-      setPulse((current) => (current + 1) % 3);
-    }, 520);
+    const dots = setInterval(() => {
+      setDotCount((count) => count === 3 ? 1 : count + 1);
+    }, 460);
 
     return () => {
-      timeouts.forEach(clearTimeout);
-      clearInterval(ticker);
+      timers.forEach(clearTimeout);
+      clearInterval(dots);
     };
   }, []);
 
-  const activeMessage = LOADING_STEPS[step];
-  const loadingDots = ".".repeat(pulse + 1);
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#fff4e8] px-6 font-sans">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,107,0,0.18),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(251,146,60,0.16),transparent_36%)]" />
-      <div className="absolute left-1/2 top-10 h-28 w-[520px] -translate-x-1/2 rounded-full bg-orange-300/20 blur-3xl" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-[#fff3e7] px-5 py-6 font-sans">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(255,107,0,0.18),transparent_28%),radial-gradient(circle_at_82%_76%,rgba(251,146,60,0.14),transparent_32%)]" />
+      <div className="absolute -top-24 left-1/2 h-64 w-[720px] -translate-x-1/2 rounded-full bg-orange-300/25 blur-3xl" />
 
-      <div className="relative w-full max-w-[860px] overflow-hidden rounded-[20px] border border-orange-100 bg-white shadow-[0_24px_80px_rgba(154,52,18,0.16)]">
-        <div className="relative h-1.5 overflow-hidden bg-orange-100">
-          <div className="absolute inset-y-0 left-0 w-2/3 animate-pulse rounded-r-full bg-gradient-to-r from-orange-500 via-amber-400 to-orange-600" />
+      <main className="relative w-full max-w-[720px] rounded-[26px] border border-orange-100/90 bg-white/95 p-6 shadow-[0_24px_80px_rgba(154,52,18,0.16)] backdrop-blur md:p-8">
+        <div className="mb-7 flex items-start justify-between gap-5">
+          <div className="min-w-0">
+            <div className="mb-3 inline-flex rounded-full border border-orange-100 bg-orange-50 px-3 py-1 text-[0.68rem] font-extrabold uppercase tracking-[0.16em] text-orange-600">
+              GHN Gtalk Dashboard
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-[-0.03em] text-slate-950 md:text-3xl">
+              Đang chuẩn bị dashboard
+            </h1>
+            <p className="mt-2 max-w-[520px] text-sm leading-6 text-slate-600">
+              Dữ liệu đang được tải và xử lý. Các trạng thái bên dưới sẽ thay đổi liên tục để bạn biết hệ thống vẫn đang hoạt động.
+            </p>
+          </div>
+
+          <div className="hidden h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-amber-400 text-xl font-black text-white shadow-lg shadow-orange-500/25 sm:flex">
+            G
+          </div>
         </div>
 
-        <div className="grid gap-0 md:grid-cols-[0.9fr_1.1fr]">
-          <section className="border-b border-orange-100 bg-gradient-to-br from-orange-50 to-white p-6 md:border-b-0 md:border-r">
-            <div className="mb-8">
-              <div className="mb-2 text-[0.68rem] font-extrabold uppercase tracking-[0.18em] text-orange-600">
-                GHN Gtalk Dashboard
+        <section className="rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-white p-4 md:p-5">
+          <div className="mb-3 flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <div className="text-xs font-bold uppercase tracking-[0.14em] text-orange-500">Đang xử lý</div>
+              <div className="mt-1 truncate text-base font-bold text-slate-950">
+                {LOADING_STEPS[step]}{".".repeat(dotCount)}
               </div>
-              <h1 className="text-xl font-bold tracking-[-0.02em] text-slate-950">
-                Đang chuẩn bị dữ liệu báo cáo
-              </h1>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Hệ thống đang tải, đồng bộ và dựng dashboard. Các chuyển động bên dưới cho biết tiến trình vẫn đang chạy bình thường.
-              </p>
             </div>
+            <div className="rounded-full bg-white px-3 py-1.5 text-sm font-black text-orange-600 shadow-sm">
+              {progress}%
+            </div>
+          </div>
 
-            <div className="rounded-2xl border border-orange-100 bg-white p-4 shadow-sm">
-              <div className="mb-3 flex items-center justify-between gap-4">
-                <span className="text-sm font-semibold text-slate-900">
-                  {activeMessage}{loadingDots}
-                </span>
-                <span className="rounded-full bg-orange-50 px-2.5 py-1 text-sm font-extrabold text-orange-600">
-                  {progress}%
-                </span>
-              </div>
+          <div className="relative h-3 overflow-hidden rounded-full bg-orange-100">
+            <div
+              className="relative h-full rounded-full bg-gradient-to-r from-orange-500 via-amber-400 to-orange-600 transition-all duration-700 ease-out"
+              style={{ width: `${progress}%` }}
+            >
+              <div className="absolute inset-0 animate-pulse bg-white/25" />
+            </div>
+          </div>
 
-              <div className="relative h-2.5 overflow-hidden rounded-full bg-orange-100">
-                <div
-                  className="relative h-full rounded-full bg-gradient-to-r from-orange-500 via-amber-400 to-orange-600 transition-all duration-700 ease-out"
-                  style={{ width: `${progress}%` }}
-                >
-                  <div className="absolute inset-y-0 right-0 w-16 animate-pulse bg-white/35 blur-sm" />
+          <div className="mt-5 grid gap-2 sm:grid-cols-5">
+            {LOADING_STEPS.map((label, index) => (
+              <div
+                key={label}
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  index <= step ? "bg-orange-500" : "bg-orange-100"
+                }`}
+                aria-label={label}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className="mt-5 grid gap-4 md:grid-cols-[1fr_1.15fr]">
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <div className="mb-4 flex items-center justify-between">
+              <div className="h-3 w-28 animate-pulse rounded-full bg-slate-200" />
+              <div className="h-7 w-20 animate-pulse rounded-lg bg-orange-50" />
+            </div>
+            <div className="space-y-3">
+              {[0, 1, 2].map((item) => (
+                <div key={item} className="rounded-xl bg-slate-50 p-3">
+                  <div className="h-2.5 w-24 animate-pulse rounded-full bg-orange-100" />
+                  <div className="mt-3 h-5 w-20 animate-pulse rounded-md bg-slate-200" />
                 </div>
-              </div>
+              ))}
+            </div>
+          </div>
 
-              <div className="mt-4 space-y-2">
-                {LOADING_STEPS.map((message, index) => (
+          <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+            <div className="mb-4 h-3 w-36 animate-pulse rounded-full bg-slate-200" />
+            <div className="flex h-36 items-end gap-3">
+              {PREVIEW_BARS.map((height, index) => (
+                <div key={index} className="flex flex-1 items-end rounded-t-lg bg-orange-50">
                   <div
-                    key={message}
-                    className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-all duration-300 ${
-                      index <= step
-                        ? "border-orange-100 bg-orange-50 text-orange-700 shadow-sm"
-                        : "border-slate-100 bg-slate-50 text-slate-400"
-                    }`}
-                  >
-                    <span
-                      className={`h-1.5 w-1.5 rounded-full ${
-                        index === step ? "animate-ping bg-orange-500" : index < step ? "bg-orange-400" : "bg-slate-300"
-                      }`}
-                    />
-                    <span>{message}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="bg-white p-6">
-            <div className="mb-5 flex items-center justify-between">
-              <div>
-                <div className="h-3 w-32 animate-pulse rounded-full bg-orange-100" />
-                <div className="mt-3 h-7 w-56 animate-pulse rounded-lg bg-slate-100" />
-              </div>
-              <div className="h-9 w-28 animate-pulse rounded-lg bg-orange-50" />
-            </div>
-
-            <div className="grid grid-cols-3 gap-3">
-              {KPI_SKELETONS.map((label) => (
-                <div key={label} className="rounded-2xl border border-orange-50 bg-orange-50/60 p-4">
-                  <div className="h-2.5 w-16 animate-pulse rounded-full bg-orange-200/70" />
-                  <div className="mt-4 h-7 w-20 animate-pulse rounded-lg bg-orange-100" />
-                  <div className="mt-3 h-2.5 w-24 animate-pulse rounded-full bg-white" />
+                    className="w-full animate-pulse rounded-t-lg bg-gradient-to-t from-orange-300 to-amber-200"
+                    style={{ height: `${height}%`, animationDelay: `${index * 100}ms` }}
+                  />
                 </div>
               ))}
             </div>
+          </div>
+        </section>
 
-            <div className="mt-4 rounded-2xl border border-orange-50 bg-white p-4 shadow-sm">
-              <div className="mb-4 flex items-center justify-between">
-                <div className="h-4 w-36 animate-pulse rounded-full bg-slate-200" />
-                <div className="h-8 w-24 animate-pulse rounded-lg bg-orange-50" />
-              </div>
-              <div className="flex h-40 items-end gap-3">
-                {CHART_BARS.map((height, index) => (
-                  <div key={index} className="flex flex-1 items-end overflow-hidden rounded-t-md bg-orange-50">
-                    <div
-                      className="w-full animate-pulse rounded-t-md bg-gradient-to-t from-orange-300 to-amber-200 transition-all duration-700"
-                      style={{ height: `${height}%`, animationDelay: `${index * 90}ms` }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4 rounded-2xl border border-orange-50 bg-white p-4 shadow-sm">
-              {TABLE_ROWS.map((item) => (
-                <div key={item} className="flex items-center gap-3 border-b border-orange-50 py-2.5 last:border-b-0">
-                  <div className="h-8 w-8 animate-pulse rounded-lg bg-orange-50" />
-                  <div className="flex-1">
-                    <div className="h-3 w-2/3 animate-pulse rounded-full bg-slate-200" />
-                    <div className="mt-2 h-2.5 w-1/3 animate-pulse rounded-full bg-orange-50" />
-                  </div>
-                  <div className="h-6 w-14 animate-pulse rounded-md bg-orange-50" />
-                </div>
-              ))}
-            </div>
-          </section>
+        <div className="mt-5 rounded-2xl border border-orange-100 bg-orange-50/80 px-4 py-3 text-center text-xs font-semibold text-orange-700">
+          Vui lòng giữ nguyên màn hình, dashboard sẽ tự hiển thị sau khi dữ liệu sẵn sàng.
         </div>
-
-        <div className="border-t border-orange-100 bg-orange-50/60 px-6 py-3 text-center text-xs font-semibold text-orange-700">
-          Dashboard vẫn đang xử lý dữ liệu, vui lòng giữ nguyên màn hình trong giây lát.
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useMemo, useState } from "react";
 import { Employee } from "@/types";
 import { getUniqueValues } from "@/lib/dauDataUtils";
@@ -55,9 +55,9 @@ function MultiSelect({
       <button
         className="filter-toggle"
         onClick={() => setIsOpen(!isOpen)}
-        style={count > 0 ? { color: "#6366f1", borderColor: "rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.04)" } : {}}
+        style={count > 0 ? { color: "#f97316", borderColor: "rgba(249,115,22,0.3)", background: "rgba(249,115,22,0.04)" } : {}}
       >
-        <span>{title}{count > 0 && <span style={{ marginLeft: 6, background: "#6366f1", color: "white", borderRadius: 20, padding: "1px 7px", fontSize: "0.7rem", fontWeight: 700 }}>{count}</span>}</span>
+        <span>{title}{count > 0 && <span style={{ marginLeft: 6, background: "#f97316", color: "white", borderRadius: 20, padding: "1px 7px", fontSize: "0.7rem", fontWeight: 700 }}>{count}</span>}</span>
         <span style={{ fontSize: "0.65rem", color: "#94a3b8", transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
       </button>
 
@@ -108,7 +108,7 @@ function DateSelect({
       <button
         className="filter-toggle"
         onClick={() => setIsOpen(!isOpen)}
-        style={{ color: "#6366f1", borderColor: "rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.04)" }}
+        style={{ color: "#f97316", borderColor: "rgba(249,115,22,0.3)", background: "rgba(249,115,22,0.04)" }}
       >
         <span className="font-bold">{value}</span>
         <span style={{ fontSize: "0.65rem", color: "#94a3b8", transform: isOpen ? "rotate(180deg)" : "none", display: "inline-block", transition: "transform 0.2s" }}>▼</span>
@@ -217,8 +217,3 @@ export default function Sidebar({
     </aside>
   );
 }
-
-
-
-
-

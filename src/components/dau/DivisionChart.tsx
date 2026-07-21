@@ -58,8 +58,8 @@ export default function DivisionChart({ data, selectedDate, prevDate }: Division
             >
               <defs>
                 <linearGradient id="gradCurr" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#6366f1" stopOpacity={0.9} />
-                  <stop offset="100%" stopColor="#3b82f6" stopOpacity={1} />
+                  <stop offset="0%" stopColor="#f97316" stopOpacity={0.9} />
+                  <stop offset="100%" stopColor="#fb923c" stopOpacity={1} />
                 </linearGradient>
                 <linearGradient id="gradPrev" x1="0" y1="0" x2="1" y2="0">
                   <stop offset="0%" stopColor="#e2e8f0" stopOpacity={1} />
@@ -80,7 +80,7 @@ export default function DivisionChart({ data, selectedDate, prevDate }: Division
                 tickFormatter={(v) => v.length > 14 ? v.substring(0, 12) + '…' : v}
                 axisLine={false} tickLine={false}
               />
-              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(99,102,241,0.04)" }} />
+              <Tooltip content={<CustomTooltip />} cursor={{ fill: "rgba(249,115,22,0.04)" }} />
               {prevDate && (
                 <Bar dataKey="pctPrev" name={`Kỳ trước (${prevDate})`} fill="url(#gradPrev)" maxBarSize={10} radius={[0, 3, 3, 0]} />
               )}
