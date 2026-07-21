@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useMemo } from "react";
 import { useDauData } from "@/hooks/useDauData";
 import {
@@ -6,6 +6,7 @@ import {
   applyFilters, fmtNumber, fmtPct,
 } from "@/lib/dauDataUtils";
 import type { DrillLevel } from "@/lib/dauDataUtils";
+import type { Employee } from "@/types";
 
 import Sidebar from "@/components/dau/Sidebar";
 import KpiCards from "@/components/dau/KpiCards";
@@ -18,8 +19,8 @@ import Loading from "@/app/loading";
 
 type Tab = "dashboard" | "detail";
 
-export default function DauDashboard({ externalTab = "dashboard" }: { externalTab?: "dashboard" | "detail" }) {
-  const { employees, activeByDate, allDates, loading, refreshing, error, reload } = useDauData();
+export default function DauDashboard({ externalTab = "dashboard", sharedEmployees }: { externalTab?: "dashboard" | "detail"; sharedEmployees?: Employee[] }) {
+  const { employees, activeByDate, allDates, loading, refreshing, error, reload } = useDauData(sharedEmployees);
 
   // ─── Filter state ─────────────────────────────────────────────────────────
   const [selectedDate, setSelectedDate] = useState<string>("");
@@ -167,8 +168,3 @@ export default function DauDashboard({ externalTab = "dashboard" }: { externalTa
     </div>
   );
 }
-
-
-
-
-

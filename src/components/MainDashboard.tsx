@@ -1,19 +1,41 @@
-﻿'use client';
+'use client';
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Dashboard from '@/components/report/Dashboard';
 import DauDashboard from '@/components/dau/DauDashboard';
+import type { Employee } from '@/types';
+import type { ReportData, StaffData } from '@/lib/gtalkDataUtils';
 
 type MainSection = 'report' | 'dau';
 type SubTab = 'dashboard' | 'detail';
 
+type SharedStaffData = StaffData & Partial<Employee>;
+
 interface MainDashboardProps {
-  reportData: any;
+  reportData: ReportData;
+}
+
+function toSharedEmployees(staffList: SharedStaffData[] = []): Employee[] {
+  return staffList
+    .map((staff) => ({
+      employee_id: Number(staff.employee_id),
+      employee_name: staff.employee_name || '',
+      status: Number(staff.status || 0),
+      jobtitle_name: staff.jobtitle_name_vn || staff.jobtitle_name || '',
+      jobtitle_name_vn: staff.jobtitle_name_vn || '',
+      team_name: staff.team_name || staff.team_name_vn || '',
+      section_name: staff.section_name || staff.section_name_vn || '',
+      department_name: staff.department_name || staff.department_name_vn || '',
+      division_name: staff.division_name || staff.division_name_vn || '',
+      bu_name: staff.bu_name || '',
+    }))
+    .filter((employee) => Number.isFinite(employee.employee_id) && employee.employee_id > 0);
 }
 
 export default function MainDashboard({ reportData }: MainDashboardProps) {
   const [activeSection, setActiveSection] = useState<MainSection>('report');
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('dashboard');
+  const sharedEmployees = useMemo(() => toSharedEmployees(reportData.staffList as SharedStaffData[]), [reportData.staffList]);
   
   // Track if DAU has been accessed to avoid running its data fetch hook before needed
   const [dauAccessed, setDauAccessed] = useState(false);
@@ -111,12 +133,10 @@ export default function MainDashboard({ reportData }: MainDashboardProps) {
 
         {dauAccessed && (
           <div className={`app-view-panel ${activeSection === 'dau' ? 'active' : ''}`}>
-            <DauDashboard externalTab={activeSubTab} />
+            <DauDashboard externalTab={activeSubTab} sharedEmployees={sharedEmployees} />
           </div>
         )}
       </div>
     </div>
   );
 }
-
-
