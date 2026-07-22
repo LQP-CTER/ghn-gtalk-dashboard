@@ -1345,3 +1345,59 @@ html, body { font-size: 14px; letter-spacing: 0; }
   .admin-dashboard-options,
   .admin-summary { grid-template-columns: 1fr; }
 }
+
+/* ─── Admin delete-by-date action ──────────────────────────────────────────── */
+.admin-delete-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  border-color: rgba(225,29,72,.14);
+  background: linear-gradient(180deg, #ffffff 0%, #fff7ed 100%);
+}
+.admin-field select {
+  width: 100%;
+  min-height: 46px;
+  border: 1px solid rgba(15,23,42,.12);
+  border-radius: 12px;
+  background: #ffffff;
+  color: #0f172a;
+  padding: 10px 13px;
+  font: inherit;
+  outline: none;
+}
+.admin-field select:focus {
+  border-color: #f97316;
+  box-shadow: 0 0 0 4px rgba(249,115,22,.12);
+}
+.admin-field select:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+.admin-danger-btn {
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e11d48 0%, #f97316 100%);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 850;
+  cursor: pointer;
+  box-shadow: 0 16px 30px rgba(225,29,72,.16);
+  transition: transform .16s ease, opacity .16s ease, box-shadow .16s ease;
+}
+.admin-danger-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 38px rgba(225,29,72,.22);
+}
+.admin-danger-btn:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.admin-danger-btn[aria-busy="true"] { cursor: wait; }
+.admin-delete-summary div {
+  border-color: rgba(225,29,72,.12);
+  background: #fff7ed;
+}

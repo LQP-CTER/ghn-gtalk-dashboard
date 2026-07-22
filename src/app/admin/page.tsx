@@ -4,7 +4,7 @@ import Link from "next/link";
 import React, { FormEvent, useMemo, useState } from "react";
 
 type Target = "gtalk_download" | "dau_tracking";
-type Status = "idle" | "checking" | "ready" | "uploading" | "success" | "error";
+type Status = "idle" | "checking" | "ready" | "loadingDates" | "uploading" | "deleting" | "success" | "error";
 
 type ImportResult = {
   dashboard: string;
@@ -12,6 +12,14 @@ type ImportResult = {
   importedRows: number;
   importedActiveUsers: number;
   importedDates: string[];
+  totalDates: number;
+  updatedAt: string | null;
+};
+
+type DeleteResult = {
+  dashboard: string;
+  removedDate: string;
+  removedUsers: number;
   totalDates: number;
   updatedAt: string | null;
 };
@@ -58,6 +66,11 @@ export default function AdminPage() {
   const [confirmedTarget, setConfirmedTarget] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<ImportResult | null>(null);
+  const [deleteResult, setDeleteResult] = useState<DeleteResult | null>(null);
+  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [deleteDate, setDeleteDate] = useState("");
+  const [confirmedDeleteTarget, setConfirmedDeleteTarget] = useState("");
+  const [confirmedDeleteDate, setConfirmedDeleteDate] = useState("");
 
   const selectedDashboard = useMemo(
     () => DASHBOARDS.find((dashboard) => dashboard.id === target) ?? DASHBOARDS[0],
@@ -65,6 +78,41 @@ export default function AdminPage() {
   );
   const isUnlocked = Boolean(sessionCode);
   const canUpload = Boolean(file && confirmedTarget === selectedDashboard.label && target && sessionCode);
+  const canDelete = Boolean(
+    deleteDate &&
+    confirmedDeleteTarget === selectedDashboard.label &&
+    confirmedDeleteDate === deleteDate &&
+    sessionCode
+  );
+
+  async function loadAvailableDates(nextTarget = target, code = sessionCode) {
+    if (!code) return;
+    setStatus("loadingDates");
+    setMessage(`Đang tải danh sách ngày của ${DASHBOARDS.find((item) => item.id === nextTarget)?.label || "dashboard"}...`);
+
+    try {
+      const response = await fetch(`/api/admin/dates?target=${nextTarget}`, {
+        headers: { "x-admin-code": code },
+        cache: "no-store",
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Không thể tải danh sách ngày.");
+
+      const dates = Array.isArray(payload.dates) ? payload.dates as string[] : [];
+      setAvailableDates(dates);
+      setDeleteDate(dates[0] || "");
+      setConfirmedDeleteDate("");
+      setConfirmedDeleteTarget("");
+      setStatus("ready");
+      setMessage(dates.length ? `Đã tải ${dates.length} ngày có dữ liệu.` : "Dashboard này chưa có ngày dữ liệu để xóa.");
+    } catch (error) {
+      setAvailableDates([]);
+      setDeleteDate("");
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "Không thể tải danh sách ngày.");
+    }
+  }
+
 
   async function verifyAccess(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,7 +130,8 @@ export default function AdminPage() {
 
       setSessionCode(accessCode);
       setStatus("ready");
-      setMessage("Đã mở khóa trang admin. Bạn có thể upload dữ liệu mới.");
+      setMessage("Đã mở khóa trang admin. Bạn có thể upload hoặc xóa dữ liệu theo ngày.");
+      await loadAvailableDates(target, accessCode);
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "Không thể xác thực mã truy cập.");
@@ -106,6 +155,7 @@ export default function AdminPage() {
     setStatus("uploading");
     setMessage(`Đang upload vào ${selectedDashboard.label}. Vui lòng giữ nguyên màn hình cho tới khi hoàn tất.`);
     setResult(null);
+    setDeleteResult(null);
 
     try {
       const response = await fetch("/api/admin/import", {
@@ -119,18 +169,67 @@ export default function AdminPage() {
       setStatus("success");
       setResult(payload as ImportResult);
       setMessage(`Đã cập nhật thành công dashboard ${payload.dashboard}.`);
+      await loadAvailableDates(target, sessionCode);
+      setStatus("success");
+      setMessage(`Đã cập nhật thành công dashboard ${payload.dashboard}.`);
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "Import thất bại.");
     }
   }
 
+  async function submitDeleteDate() {
+    if (!canDelete) {
+      setStatus("error");
+      setMessage(`Vui lòng xác nhận đúng '${selectedDashboard.label}' và đúng ngày '${deleteDate}' trước khi xóa.`);
+      return;
+    }
+
+    setStatus("deleting");
+    setMessage(`Đang xóa ngày ${deleteDate} khỏi ${selectedDashboard.label}.`);
+    setResult(null);
+    setDeleteResult(null);
+
+    try {
+      const response = await fetch("/api/admin/delete-date", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-admin-code": sessionCode,
+        },
+        body: JSON.stringify({
+          target,
+          date: deleteDate,
+          confirmedTarget: confirmedDeleteTarget,
+          confirmedDate: confirmedDeleteDate,
+        }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.error || "Xóa dữ liệu thất bại.");
+
+      setStatus("success");
+      setDeleteResult(payload as DeleteResult);
+      setMessage(`Đã xóa ngày ${payload.removedDate} khỏi dashboard ${payload.dashboard}.`);
+      await loadAvailableDates(target, sessionCode);
+      setStatus("success");
+      setDeleteResult(payload as DeleteResult);
+      setMessage(`Đã xóa ngày ${payload.removedDate} khỏi dashboard ${payload.dashboard}.`);
+    } catch (error) {
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "Xóa dữ liệu thất bại.");
+    }
+  }
+
   function handleTargetChange(nextTarget: Target) {
     setTarget(nextTarget);
     setConfirmedTarget("");
+    setConfirmedDeleteTarget("");
+    setConfirmedDeleteDate("");
     setResult(null);
-    setMessage("Đã đổi dashboard đích. Vui lòng xác nhận lại trước khi upload.");
+    setDeleteResult(null);
+    setMessage("Đã đổi dashboard đích. Vui lòng xác nhận lại trước khi thao tác.");
     setStatus(isUnlocked ? "ready" : "idle");
+    if (sessionCode) void loadAvailableDates(nextTarget, sessionCode);
   }
 
   return (
@@ -139,9 +238,9 @@ export default function AdminPage() {
         <div className="admin-hero">
           <div>
             <p className="admin-eyebrow">GHN GTalk Dashboard Admin</p>
-            <h1>Upload dữ liệu dashboard</h1>
+            <h1>Quản lý dữ liệu dashboard</h1>
             <p>
-              Trang này dùng để cập nhật dữ liệu active user vào NeonDB. Hãy chọn đúng dashboard đích trước khi upload để tránh ghi nhầm dữ liệu.
+              Trang này dùng để cập nhật hoặc xóa dữ liệu active user theo ngày trong NeonDB. Hãy chọn đúng dashboard đích trước khi thao tác để tránh ghi nhầm dữ liệu.
             </p>
           </div>
           <Link className="admin-back-link" href="/">Quay lại dashboard</Link>
@@ -152,7 +251,7 @@ export default function AdminPage() {
             <div>
               <p className="admin-card-label">Bảo vệ trang admin</p>
               <h2>Nhập mã truy cập</h2>
-              <p>Chỉ người có mã mới có thể mở form upload dữ liệu.</p>
+              <p>Chỉ người có mã mới có thể mở form quản lý dữ liệu.</p>
             </div>
             <label className="admin-field">
               <span>Mã truy cập admin</span>
@@ -174,10 +273,10 @@ export default function AdminPage() {
           <form className="admin-grid" onSubmit={submitImport}>
             <section className="admin-card admin-target-card">
               <p className="admin-card-label">Bước 1</p>
-              <h2>Chọn dashboard cần cập nhật</h2>
-              <p className="admin-help-text">Bắt buộc chọn đúng nơi nhận dữ liệu. Mỗi lựa chọn sẽ ghi vào snapshot khác nhau trong database.</p>
+              <h2>Chọn dashboard cần thao tác</h2>
+              <p className="admin-help-text">Bắt buộc chọn đúng nơi nhận dữ liệu. Mỗi lựa chọn sẽ ghi/xóa trên snapshot khác nhau trong database.</p>
 
-              <div className="admin-dashboard-options" role="radiogroup" aria-label="Dashboard cần cập nhật">
+              <div className="admin-dashboard-options" role="radiogroup" aria-label="Dashboard cần thao tác">
                 {DASHBOARDS.map((dashboard) => (
                   <button
                     type="button"
@@ -202,7 +301,7 @@ export default function AdminPage() {
             </section>
 
             <section className="admin-card admin-upload-card">
-              <p className="admin-card-label">Bước 2</p>
+              <p className="admin-card-label">Bước 2A</p>
               <h2>Upload file CSV</h2>
               <p className="admin-help-text">
                 Nếu file chỉ có một cột employee_id như mẫu bạn gửi, hãy chọn ngày dữ liệu. Nếu file đã có nhiều cột ngày, hệ thống sẽ tự đọc các ngày trong file.
@@ -238,12 +337,55 @@ export default function AdminPage() {
               </button>
             </section>
 
+            <section className="admin-card admin-delete-card">
+              <p className="admin-card-label">Bước 2B</p>
+              <h2>Xóa dữ liệu theo ngày</h2>
+              <p className="admin-help-text">
+                Chỉ xóa đúng một ngày trong dashboard đang chọn. Không xóa workforce, không xóa toàn bộ dashboard.
+              </p>
+
+              <label className="admin-field">
+                <span>Ngày đang có trong database</span>
+                <select value={deleteDate} onChange={(event) => { setDeleteDate(event.target.value); setConfirmedDeleteDate(""); }} disabled={status === "loadingDates" || availableDates.length === 0}>
+                  {availableDates.length === 0 ? (
+                    <option value="">Chưa có ngày để xóa</option>
+                  ) : availableDates.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="admin-field">
+                <span>Xác nhận dashboard cần xóa</span>
+                <input
+                  type="text"
+                  value={confirmedDeleteTarget}
+                  onChange={(event) => setConfirmedDeleteTarget(event.target.value)}
+                  placeholder={`Gõ chính xác: ${selectedDashboard.label}`}
+                />
+              </label>
+
+              <label className="admin-field">
+                <span>Xác nhận ngày cần xóa</span>
+                <input
+                  type="text"
+                  value={confirmedDeleteDate}
+                  onChange={(event) => setConfirmedDeleteDate(event.target.value)}
+                  placeholder={deleteDate ? `Gõ chính xác: ${deleteDate}` : "Chọn ngày trước"}
+                />
+              </label>
+
+              <button className="admin-danger-btn" type="button" disabled={!canDelete || status === "deleting"} aria-busy={status === "deleting"} onClick={submitDeleteDate}>
+                {status === "deleting" ? `Đang xóa ngày ${deleteDate}...` : `Xóa ngày ${deleteDate || "đã chọn"}`}
+              </button>
+            </section>
+
             <section className="admin-card admin-result-card" aria-live="polite">
               <p className="admin-card-label">Trạng thái</p>
-              <h2>{status === "success" ? "Cập nhật hoàn tất" : status === "uploading" ? "Đang xử lý dữ liệu" : "Sẵn sàng cập nhật"}</h2>
+              <h2>{status === "success" ? "Thao tác hoàn tất" : status === "uploading" || status === "deleting" ? "Đang xử lý dữ liệu" : "Sẵn sàng thao tác"}</h2>
               {message && <p className={`admin-message ${status === "error" ? "is-error" : status === "success" ? "is-success" : ""}`}>{message}</p>}
 
-              {status === "uploading" && (
+              {(status === "uploading" || status === "deleting" || status === "loadingDates") && (
                 <div className="admin-progress" aria-hidden="true">
                   <span />
                 </div>
@@ -258,6 +400,16 @@ export default function AdminPage() {
                   <div><span>Ngày import</span><strong>{result.importedDates.join(", ")}</strong></div>
                   <div><span>Tổng ngày trong DB</span><strong>{result.totalDates.toLocaleString("vi-VN")}</strong></div>
                   <div><span>Cập nhật lúc</span><strong>{formatUpdatedAt(result.updatedAt)}</strong></div>
+                </div>
+              )}
+
+              {deleteResult && (
+                <div className="admin-summary admin-delete-summary">
+                  <div><span>Dashboard</span><strong>{deleteResult.dashboard}</strong></div>
+                  <div><span>Ngày đã xóa</span><strong>{deleteResult.removedDate}</strong></div>
+                  <div><span>User active đã xóa</span><strong>{deleteResult.removedUsers.toLocaleString("vi-VN")}</strong></div>
+                  <div><span>Tổng ngày còn lại</span><strong>{deleteResult.totalDates.toLocaleString("vi-VN")}</strong></div>
+                  <div><span>Cập nhật lúc</span><strong>{formatUpdatedAt(deleteResult.updatedAt)}</strong></div>
                 </div>
               )}
             </section>

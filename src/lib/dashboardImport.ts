@@ -194,3 +194,56 @@ export function mergeActiveUpload(target: DashboardImportTarget, current: Import
     allDates: sortDateKeys(Object.keys(activeByDate)),
   } satisfies DauSnapshot;
 }
+
+export function removeDateFromSnapshot(target: DashboardImportTarget, current: ImportSnapshot | null, dateKey: string) {
+  const normalizedDate = toDateKeyFromDateInput(dateKey);
+  if (!normalizedDate) {
+    throw new Error("Ngày cần xóa không hợp lệ.");
+  }
+
+  if (target === "gtalk_download") {
+    const currentReport = current as ReportData | null;
+    if (!currentReport?.staffList?.length) {
+      throw new Error("Chưa có dữ liệu Gtalk Download trong database.");
+    }
+    if (!currentReport.activeByDate?.[normalizedDate]) {
+      throw new Error(`Không tìm thấy ngày ${normalizedDate} trong dashboard Gtalk Download.`);
+    }
+
+    const activeByDate = { ...(currentReport.activeByDate || {}) };
+    const removedUsers = activeByDate[normalizedDate]?.length ?? 0;
+    delete activeByDate[normalizedDate];
+
+    return {
+      snapshot: {
+        staffList: currentReport.staffList,
+        activeByDate,
+        allDates: sortDateKeys(Object.keys(activeByDate)),
+      } satisfies ReportData,
+      removedDate: normalizedDate,
+      removedUsers,
+    };
+  }
+
+  const currentDau = current as DauSnapshot | null;
+  if (!currentDau?.employees?.length) {
+    throw new Error("Chưa có dữ liệu DAU trong database.");
+  }
+  if (!currentDau.activeByDate?.[normalizedDate]) {
+    throw new Error(`Không tìm thấy ngày ${normalizedDate} trong dashboard DAU.`);
+  }
+
+  const activeByDate = { ...(currentDau.activeByDate || {}) };
+  const removedUsers = activeByDate[normalizedDate]?.length ?? 0;
+  delete activeByDate[normalizedDate];
+
+  return {
+    snapshot: {
+      employees: currentDau.employees,
+      activeByDate,
+      allDates: sortDateKeys(Object.keys(activeByDate)),
+    } satisfies DauSnapshot,
+    removedDate: normalizedDate,
+    removedUsers,
+  };
+}
