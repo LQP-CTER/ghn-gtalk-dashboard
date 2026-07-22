@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import { Check, Loader2 } from "lucide-react";
 
 const LOADING_STEPS = [
   "Kết nối dữ liệu",
@@ -16,86 +17,133 @@ export default function Loading() {
   const [progress, setProgress] = useState(12);
 
   useEffect(() => {
-    const timers = STEP_DELAYS.map((delay, index) => setTimeout(() => {
-      setStep(index);
-      setProgress(STEP_PROGRESS[index]);
-    }, delay));
+    const timers = STEP_DELAYS.map((delay, index) =>
+      setTimeout(() => {
+        setStep(index);
+        setProgress(STEP_PROGRESS[index]);
+      }, delay)
+    );
 
     return () => timers.forEach(clearTimeout);
   }, []);
 
   const progressLabel = useMemo(() => `${progress}%`, [progress]);
-  const progressRing = `conic-gradient(#f97316 ${progress * 3.6}deg, #ffedd5 0deg)`;
+  const circumference = 2 * Math.PI * 40;
 
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center overflow-hidden bg-[#fff7ed] px-6 py-8 font-sans text-slate-950">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_22%,rgba(249,115,22,0.14),transparent_30%),radial-gradient(circle_at_50%_80%,rgba(251,146,60,0.10),transparent_36%)]" />
-      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-600 via-orange-400 to-amber-300" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-[#f8fafc] px-5 py-10">
+      {/* Ambient background */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute left-1/2 top-[-10%] h-[420px] w-[420px] -translate-x-1/2 rounded-full bg-orange-400/20 blur-[110px]" />
+        <div className="absolute bottom-[-15%] right-[-5%] h-[360px] w-[360px] rounded-full bg-amber-300/15 blur-[100px]" />
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage:
+              "linear-gradient(#0f172a 1px, transparent 1px), linear-gradient(90deg, #0f172a 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
+      </div>
 
-      <main className="relative w-full max-w-[460px] rounded-[30px] border border-orange-100/90 bg-white/95 px-7 py-8 text-center shadow-[0_26px_90px_rgba(154,52,18,0.15)] backdrop-blur md:px-9 md:py-10">
-        <div className="mx-auto mb-7 w-fit rounded-full border border-orange-100 bg-orange-50 px-3.5 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.18em] text-orange-600">
-          GHN GTalk Dashboard
+      <main className="relative flex w-full max-w-[400px] flex-col items-center rounded-[28px] border border-slate-200/70 bg-white/90 px-8 py-10 text-center shadow-[0_1px_1px_rgba(15,23,42,0.03),0_24px_64px_-12px_rgba(15,23,42,0.16)] backdrop-blur-xl">
+        {/* Brand */}
+        <div className="flex items-center gap-2.5">
+          <div className="grid h-9 w-9 place-items-center rounded-[10px] bg-gradient-to-br from-orange-500 to-amber-400 text-sm font-black text-white shadow-[0_6px_16px_-4px_rgba(249,115,22,0.55)]">
+            G
+          </div>
+          <div className="text-left">
+            <div className="text-[0.8rem] font-bold leading-none tracking-tight text-slate-900">
+              GHN GTalk
+            </div>
+            <div className="mt-1 text-[0.62rem] font-semibold uppercase tracking-[0.16em] text-slate-400">
+              Adoption Dashboard
+            </div>
+          </div>
         </div>
 
-        <div className="relative mx-auto mb-7 grid h-32 w-32 place-items-center rounded-full" style={{ background: progressRing }}>
-          <div className="absolute inset-2 rounded-full bg-white shadow-inner" />
-          <div className="relative grid h-24 w-24 place-items-center rounded-full bg-[#fffaf5] ring-1 ring-orange-100">
-            <span className="text-[1.7rem] font-black tracking-[-0.05em] text-orange-600 tabular-nums">
+        {/* Progress ring */}
+        <div className="relative mt-9 h-28 w-28">
+          <svg viewBox="0 0 96 96" className="h-full w-full -rotate-90">
+            <circle cx="48" cy="48" r="40" fill="none" stroke="#f1f5f9" strokeWidth="7" />
+            <circle
+              cx="48"
+              cy="48"
+              r="40"
+              fill="none"
+              stroke="url(#loadingGradient)"
+              strokeWidth="7"
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={circumference * (1 - progress / 100)}
+              style={{ transition: "stroke-dashoffset 0.7s cubic-bezier(0.4,0,0.2,1)" }}
+            />
+            <defs>
+              <linearGradient id="loadingGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#f97316" />
+                <stop offset="100%" stopColor="#fbbf24" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <div className="absolute inset-0 flex flex-col items-center justify-center">
+            <span className="text-[1.65rem] font-black tabular-nums leading-none tracking-tight text-slate-900">
               {progressLabel}
             </span>
           </div>
-          <div className="absolute inset-0 animate-[softSpin_2.4s_linear_infinite] rounded-full border border-transparent border-t-orange-300" />
         </div>
 
-        <h1 className="text-[1.7rem] font-black leading-tight tracking-[-0.04em] text-slate-950 md:text-[2rem]">
+        <h1 className="mt-7 text-[1.3rem] font-bold leading-snug tracking-tight text-slate-900">
           Đang chuẩn bị dashboard
         </h1>
-        <p className="mx-auto mt-3 max-w-[350px] text-sm leading-6 text-slate-500">
-          Hệ thống đang tải dữ liệu mới nhất. Dashboard sẽ tự hiển thị khi sẵn sàng.
+        <p className="mt-2 text-[0.85rem] leading-relaxed text-slate-500">
+          Hệ thống đang tải dữ liệu mới nhất, sẽ hiển thị ngay khi hoàn tất.
         </p>
 
-        <div className="mx-auto mt-6 max-w-[340px] rounded-2xl border border-slate-100 bg-slate-50/70 px-4 py-3">
-          <div className="text-[0.68rem] font-bold uppercase tracking-[0.14em] text-slate-400">
-            Trạng thái hiện tại
-          </div>
-          <div className="mt-1 text-sm font-extrabold text-slate-900" aria-live="polite">
-            {LOADING_STEPS[step]}
-          </div>
+        {/* Steps */}
+        <div className="mt-7 flex w-full flex-col gap-1 rounded-2xl border border-slate-100 bg-slate-50/70 p-2.5">
+          {LOADING_STEPS.map((label, index) => {
+            const done = index < step;
+            const active = index === step;
+            return (
+              <div
+                key={label}
+                className={`flex items-center gap-2.5 rounded-xl px-3 py-2 transition-colors duration-300 ${
+                  active ? "bg-white shadow-[0_1px_2px_rgba(15,23,42,0.06)]" : ""
+                }`}
+              >
+                <div
+                  className={`grid h-5 w-5 shrink-0 place-items-center rounded-full transition-colors duration-300 ${
+                    done
+                      ? "bg-orange-500 text-white"
+                      : active
+                        ? "bg-orange-50 text-orange-500"
+                        : "bg-slate-100 text-slate-300"
+                  }`}
+                >
+                  {done ? (
+                    <Check className="h-3 w-3" strokeWidth={3} />
+                  ) : active ? (
+                    <Loader2 className="h-3 w-3 animate-spin" strokeWidth={3} />
+                  ) : (
+                    <span className="h-1 w-1 rounded-full bg-current" />
+                  )}
+                </div>
+                <span
+                  className={`text-[0.8rem] font-semibold transition-colors duration-300 ${
+                    active ? "text-slate-900" : done ? "text-slate-500" : "text-slate-400"
+                  }`}
+                >
+                  {label}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
-        <div className="mx-auto mt-5 flex w-fit items-center gap-2" aria-hidden="true">
-          {LOADING_STEPS.map((label, index) => (
-            <div
-              key={label}
-              className={`h-2 rounded-full transition-all duration-500 ${
-                index === step
-                  ? "w-8 bg-orange-500"
-                  : index < step
-                    ? "w-2 bg-orange-300"
-                    : "w-2 bg-orange-100"
-              }`}
-            />
-          ))}
-        </div>
-
-        <p className="mt-6 text-xs font-medium text-slate-400">
-          Có thể mất vài giây khi đồng bộ từ Google Sheets.
+        <p className="mt-6 text-[0.72rem] font-medium text-slate-400">
+          Có thể mất vài giây khi đồng bộ từ Google Sheets
         </p>
       </main>
-
-      <style jsx>{`
-        @keyframes softSpin {
-          to { transform: rotate(360deg); }
-        }
-
-        @media (max-height: 560px) {
-          main { padding-top: 24px; padding-bottom: 24px; max-width: 430px; }
-          main > div:nth-of-type(2) { width: 104px; height: 104px; margin-bottom: 18px; }
-          main > div:nth-of-type(2) > div:nth-of-type(2) { width: 78px; height: 78px; }
-          h1 { font-size: 1.45rem; }
-          p:last-child { display: none; }
-        }
-      `}</style>
     </div>
   );
 }
