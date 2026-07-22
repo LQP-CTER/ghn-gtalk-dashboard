@@ -15,6 +15,16 @@ interface MainDashboardProps {
   reportData: ReportData;
 }
 
+function getInitialView(): { section: MainSection; tab: SubTab; dauAccessed: boolean } {
+  if (typeof window === 'undefined') return { section: 'report', tab: 'dashboard', dauAccessed: false };
+
+  const tabParam = new URLSearchParams(window.location.search).get('tab');
+  if (tabParam === 'dau') return { section: 'dau', tab: 'dashboard', dauAccessed: true };
+  if (tabParam === 'dau_list') return { section: 'dau', tab: 'detail', dauAccessed: true };
+  if (tabParam === 'report_list') return { section: 'report', tab: 'detail', dauAccessed: false };
+  return { section: 'report', tab: 'dashboard', dauAccessed: false };
+}
+
 function toSharedEmployees(staffList: SharedStaffData[] = []): Employee[] {
   return staffList
     .map((staff) => ({
@@ -33,31 +43,13 @@ function toSharedEmployees(staffList: SharedStaffData[] = []): Employee[] {
 }
 
 export default function MainDashboard({ reportData }: MainDashboardProps) {
-  const [activeSection, setActiveSection] = useState<MainSection>('report');
-  const [activeSubTab, setActiveSubTab] = useState<SubTab>('dashboard');
+  const initialView = useMemo(() => getInitialView(), []);
+  const [activeSection, setActiveSection] = useState<MainSection>(initialView.section);
+  const [activeSubTab, setActiveSubTab] = useState<SubTab>(initialView.tab);
   const sharedEmployees = useMemo(() => toSharedEmployees(reportData.staffList as SharedStaffData[]), [reportData.staffList]);
   
   // Track if DAU has been accessed to avoid running its data fetch hook before needed
-  const [dauAccessed, setDauAccessed] = useState(false);
-
-  React.useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tabParam = urlParams.get('tab');
-      if (tabParam === 'dau') {
-        setActiveSection('dau');
-        setActiveSubTab('dashboard');
-        setDauAccessed(true);
-      } else if (tabParam === 'dau_list') {
-        setActiveSection('dau');
-        setActiveSubTab('detail');
-        setDauAccessed(true);
-      } else if (tabParam === 'report_list') {
-        setActiveSection('report');
-        setActiveSubTab('detail');
-      }
-    }
-  }, []);
+  const [dauAccessed, setDauAccessed] = useState(initialView.dauAccessed);
 
   // When switching to DAU tab, mark as accessed
   const handleSectionChange = (section: MainSection) => {
@@ -128,12 +120,12 @@ export default function MainDashboard({ reportData }: MainDashboardProps) {
       {/* Main Content Area - each dashboard fills the remaining space and scrolls */}
       <div className="app-workspace">
         <div className={`app-view-panel ${activeSection === 'report' ? 'active' : ''}`}>
-          <Dashboard data={reportData} externalTab={activeSubTab} />
+          <Dashboard data={reportData} externalTab={activeSection === 'report' ? activeSubTab : 'dashboard'} />
         </div>
 
         {dauAccessed && (
           <div className={`app-view-panel ${activeSection === 'dau' ? 'active' : ''}`}>
-            <DauDashboard externalTab={activeSubTab} sharedEmployees={sharedEmployees} />
+            <DauDashboard externalTab={activeSection === 'dau' ? activeSubTab : 'dashboard'} sharedEmployees={sharedEmployees} />
           </div>
         )}
       </div>

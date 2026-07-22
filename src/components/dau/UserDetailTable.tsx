@@ -28,10 +28,10 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
     
     const lowerSearch = searchTerm.toLowerCase();
     return filtered.filter((e) => 
-      e.employee_name.toLowerCase().includes(lowerSearch) ||
+      (e.employee_name || "").toLowerCase().includes(lowerSearch) ||
       e.employee_id.toString().includes(lowerSearch) ||
-      e.department_name.toLowerCase().includes(lowerSearch) ||
-      e.section_name.toLowerCase().includes(lowerSearch)
+      (e.department_name || "").toLowerCase().includes(lowerSearch) ||
+      (e.section_name || "").toLowerCase().includes(lowerSearch)
     );
   }, [employees, activeSet, searchTerm, statusFilter]);
 
@@ -46,10 +46,10 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
     let csvContent = "ID Nhan vien,Ho va Ten,Job Title,Section,Department,Trang thai\n";
 
     filteredUsers.forEach(e => {
-      const name = `"${e.employee_name.replace(/"/g, '""')}"`;
+      const name = `"${(e.employee_name || "").replace(/"/g, '""')}"`;
       const title = `"${(e.jobtitle_name_vn || e.jobtitle_name || "-").replace(/"/g, '""')}"`;
-      const section = `"${e.section_name.replace(/"/g, '""')}"`;
-      const dept = `"${e.department_name.replace(/"/g, '""')}"`;
+      const section = `"${(e.section_name || "").replace(/"/g, '""')}"`;
+      const dept = `"${(e.department_name || "").replace(/"/g, '""')}"`;
       const status = activeSet.has(e.employee_id) ? "Active" : "Chua Active";
       
       csvContent += `${e.employee_id},${name},${title},${section},${dept},${status}\n`;
@@ -156,8 +156,9 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
             ) : (
               pageUsers.map((e) => {
                 // Get initials for avatar (e.g. "Nguyen Van A" -> "A")
-                const parts = e.employee_name.trim().split(" ");
-                const initial = parts.length > 0 ? parts[parts.length - 1][0].toUpperCase() : "U";
+                const displayName = e.employee_name?.trim() || `User ${e.employee_id}`;
+                const parts = displayName.split(" ").filter(Boolean);
+                const initial = parts.at(-1)?.charAt(0).toUpperCase() || "U";
                 const isActive = activeSet.has(e.employee_id);
 
                 return (
@@ -166,7 +167,7 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
                       <div className="user-profile-cell">
                         <div className="user-avatar">{initial}</div>
                         <div className="user-info">
-                          <span className="user-name">{e.employee_name}</span>
+                          <span className="user-name">{displayName}</span>
                           <span className="user-id">#{e.employee_id}</span>
                         </div>
                       </div>
@@ -182,8 +183,8 @@ export default function UserDetailTable({ employees, activeSet, date }: UserDeta
                       </span>
                     </td>
                     <td>{e.jobtitle_name_vn || e.jobtitle_name || "-"}</td>
-                    <td>{e.section_name}</td>
-                    <td>{e.department_name}</td>
+                    <td>{e.section_name || "-"}</td>
+                    <td>{e.department_name || "-"}</td>
                   </tr>
                 );
               })
