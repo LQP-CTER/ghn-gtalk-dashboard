@@ -18,6 +18,12 @@ type CachedDauData = {
   allDates: string[];
 };
 
+type ApiDauSnapshot = {
+  employees: Employee[];
+  activeByDate: Record<string, number[]>;
+  allDates: string[];
+};
+
 let memoryCache: { ts: number; data: DauData } | null = null;
 let inFlightLoad: Promise<DauData> | null = null;
 
@@ -197,7 +203,28 @@ function parseUserActive(rows: string[][]): ActiveByDate {
   return activeByDate;
 }
 
+async function fetchDauDataFromApi(force: boolean, sharedEmployees?: Employee[]): Promise<DauData | null> {
+  try {
+    const url = force ? `/api/dau-data?t=${Date.now()}` : "/api/dau-data";
+    const res = await fetch(url, { cache: "no-store" });
+    if (!res.ok) return null;
+
+    const snapshot = await res.json() as ApiDauSnapshot;
+    return {
+      employees: hasUsableWorkforce(sharedEmployees) ? sharedEmployees : snapshot.employees || [],
+      activeByDate: hydrateActiveByDate(snapshot.activeByDate),
+      allDates: snapshot.allDates || [],
+      loading: false,
+      error: null,
+    };
+  } catch {
+    return null;
+  }
+}
 async function fetchDauData(force: boolean, sharedEmployees?: Employee[]): Promise<DauData> {
+  const apiData = await fetchDauDataFromApi(force, sharedEmployees);
+  if (apiData) return apiData;
+
   const canReuseWorkforce = !force && hasUsableWorkforce(sharedEmployees);
   const userActiveUrl = force ? `${USER_ACTIVE_URL}&t=${Date.now()}` : USER_ACTIVE_URL;
   const workforcePromise = canReuseWorkforce

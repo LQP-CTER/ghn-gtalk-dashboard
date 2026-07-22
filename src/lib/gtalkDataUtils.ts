@@ -1,3 +1,5 @@
+import { readSnapshot } from "./db";
+
 const APPS_SCRIPT_URL =
   'https://script.google.com/macros/s/AKfycby47lJymK5vNJpqRx0mS_00YpwTsoLpBDTTBnyxo_Dkrjp3EMlUMwbNV_FMIubm0LG4/exec';
 
@@ -18,9 +20,15 @@ export interface ReportData {
 // ponytail: module-level cache — ceiling is process restart clears it (acceptable for this use case)
 let _cache: { data: ReportData; ts: number } | null = null;
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6 hours
+const SNAPSHOT_SOURCE = "gtalk_download";
 
 export async function fetchAndProcessData(forceRefresh = false): Promise<ReportData> {
   if (!forceRefresh && _cache && Date.now() - _cache.ts < CACHE_TTL) return _cache.data;
+  const databaseData = await readSnapshot<ReportData>(SNAPSHOT_SOURCE).catch(() => null);
+  if (databaseData) {
+    _cache = { data: databaseData, ts: Date.now() };
+    return databaseData;
+  }
 
 
   const res = await fetch(APPS_SCRIPT_URL, { cache: 'no-store' });
