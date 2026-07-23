@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { useDauData } from "@/hooks/useDauData";
 import {
-  computeMetrics, buildTrendData, buildDivisionData, buildDrillData,
+  computeMetrics, computeRollingActiveMetrics, buildTrendData, buildDivisionData, buildDrillData,
   applyFilters, fmtNumber, fmtPct,
 } from "@/lib/dauDataUtils";
 import type { DrillLevel } from "@/lib/dauDataUtils";
@@ -44,6 +44,8 @@ export default function DauDashboard({ externalTab = "dashboard", sharedEmployee
   const currMetrics = useMemo(() => computeMetrics(effectiveDate, filteredEmployees, activeByDate), [effectiveDate, filteredEmployees, activeByDate]);
   const prevMetrics = useMemo(() => computeMetrics(prevDate, filteredEmployees, activeByDate), [prevDate, filteredEmployees, activeByDate]);
   const firstMetrics = useMemo(() => computeMetrics(firstDate, filteredEmployees, activeByDate), [firstDate, filteredEmployees, activeByDate]);
+  const wauMetrics = useMemo(() => computeRollingActiveMetrics(effectiveDate, 7, allDates, filteredEmployees, activeByDate), [effectiveDate, allDates, filteredEmployees, activeByDate]);
+  const mauMetrics = useMemo(() => computeRollingActiveMetrics(effectiveDate, 30, allDates, filteredEmployees, activeByDate), [effectiveDate, allDates, filteredEmployees, activeByDate]);
 
   // ─── Trend ────────────────────────────────────────────────────────────────
   const trendData = useMemo(() => buildTrendData(allDates, filteredEmployees, activeByDate), [allDates, filteredEmployees, activeByDate]);
@@ -120,9 +122,7 @@ export default function DauDashboard({ externalTab = "dashboard", sharedEmployee
             <h1>DAILY ACTIVE USER TRACKING</h1>
             <div className="header-sub">
               Nguồn DAU User Tracking riêng · Theo dõi user có sử dụng Gtalk trong ngày · Ngày:{" "}
-              <strong>{effectiveDate}</strong> · Đã active:{" "}
-              <strong>{fmtNumber(currMetrics.activeCount)}/{fmtNumber(currMetrics.totalHc)}</strong> ·
-              Tỷ lệ: <strong>{fmtPct(currMetrics.pct)}</strong>
+              <strong>{effectiveDate}</strong> · DAU: <strong>{fmtNumber(currMetrics.activeCount)}/{fmtNumber(currMetrics.totalHc)}</strong> · WAU: <strong>{fmtNumber(wauMetrics.activeCount)}</strong> · MAU: <strong>{fmtNumber(mauMetrics.activeCount)}</strong> · Tỷ lệ DAU: <strong>{fmtPct(currMetrics.pct)}</strong>
             </div>
           </div>
           <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Cập nhật: {now}</div>
@@ -137,6 +137,8 @@ export default function DauDashboard({ externalTab = "dashboard", sharedEmployee
                 curr={currMetrics}
                 prev={prevMetrics}
                 first={firstMetrics}
+                wau={wauMetrics}
+                mau={mauMetrics}
                 selectedDate={effectiveDate}
                 prevDate={prevDate}
               />

@@ -1401,3 +1401,20 @@ html, body { font-size: 14px; letter-spacing: 0; }
   border-color: rgba(225,29,72,.12);
   background: #fff7ed;
 }
+
+/* ─── DAU rolling usage KPIs ───────────────────────────────────────────────── */
+.dau-kpi-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+.dau-kpi-grid .kpi-card {
+  min-width: 0;
+}
+.dau-kpi-grid .kpi-value {
+  font-size: clamp(1.45rem, 1.7vw, 1.95rem);
+}
+@media (max-width: 1500px) {
+  .dau-kpi-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 760px) {
+  .dau-kpi-grid { grid-template-columns: 1fr; }
+}

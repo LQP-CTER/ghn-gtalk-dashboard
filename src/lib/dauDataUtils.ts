@@ -17,6 +17,62 @@ export function computeMetrics(
   return { totalHc, activeCount, inactiveCount, pct };
 }
 
+
+export interface PeriodMetrics extends Metrics {
+  dateCount: number;
+  startDate: string | null;
+  endDate: string | null;
+}
+
+function dateKeyToMs(dateKey: string): number {
+  const [day, month] = dateKey.split("/").map(Number);
+  if (!day || !month) return Number.NaN;
+  return new Date(2026, month - 1, day).getTime();
+}
+
+export function computeRollingActiveMetrics(
+  targetDate: string | null,
+  windowDays: number,
+  allDates: string[],
+  employees: Employee[],
+  activeByDate: ActiveByDate
+): PeriodMetrics {
+  if (!targetDate || employees.length === 0 || allDates.length === 0) {
+    return { totalHc: employees.length, activeCount: 0, inactiveCount: employees.length, pct: 0, dateCount: 0, startDate: null, endDate: targetDate };
+  }
+
+  const targetMs = dateKeyToMs(targetDate);
+  if (!Number.isFinite(targetMs)) {
+    return { totalHc: employees.length, activeCount: 0, inactiveCount: employees.length, pct: 0, dateCount: 0, startDate: null, endDate: targetDate };
+  }
+
+  const startMs = targetMs - (windowDays - 1) * 24 * 60 * 60 * 1000;
+  const windowDates = allDates.filter((date) => {
+    const dateMs = dateKeyToMs(date);
+    return Number.isFinite(dateMs) && dateMs >= startMs && dateMs <= targetMs;
+  });
+
+  const activeIds = new Set<number>();
+  windowDates.forEach((date) => {
+    const activeSet = activeByDate[date] ?? new Set<number>();
+    activeSet.forEach((employeeId) => activeIds.add(Number(employeeId)));
+  });
+
+  const totalHc = employees.length;
+  const activeCount = employees.filter((employee) => activeIds.has(employee.employee_id)).length;
+  const inactiveCount = totalHc - activeCount;
+  const pct = totalHc > 0 ? (activeCount / totalHc) * 100 : 0;
+
+  return {
+    totalHc,
+    activeCount,
+    inactiveCount,
+    pct,
+    dateCount: windowDates.length,
+    startDate: windowDates[0] ?? null,
+    endDate: targetDate,
+  };
+}
 // ─── Build trend data across all dates ────────────────────────────────────────
 export function buildTrendData(
   allDates: string[],
