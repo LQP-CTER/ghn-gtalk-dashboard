@@ -1,4 +1,4 @@
-﻿import Papa from "papaparse";
+import Papa from "papaparse";
 import type { Employee } from "@/types";
 import type { ReportData } from "@/lib/gtalkDataUtils";
 
@@ -71,6 +71,14 @@ function normalizeDateKey(rawValue: unknown): string | null {
         month: "2-digit",
       }).format(date);
     }
+  }
+
+  const cleanRaw = raw.split("(")[0].trim();
+  const parsed = new Date(cleanRaw);
+  if (!Number.isNaN(parsed.getTime())) {
+    const intendedDay = String(parsed.getMonth() + 1).padStart(2, "0");
+    const intendedMonth = String(parsed.getDate()).padStart(2, "0");
+    return `${intendedDay}/${intendedMonth}`;
   }
 
   return null;
